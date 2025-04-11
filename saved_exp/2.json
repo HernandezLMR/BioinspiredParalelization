@@ -1,0 +1,37 @@
+{
+    "type": "math",
+    "generations": "100",
+    "pop_size": "20",
+    "task_config":
+    {
+        "eq": "(- 150 * x0) - (230 * x1) - (260 * x2) - (238 * x3) - (210 * x4) + (170 * x5) + (150 * x6) + (36 * x7) + (10 * x8)",
+        "obj": "MAX",
+        "ranges": 
+        {
+            "x0": {"min":0, "max":500},
+            "x1": {"min":0, "max":500},
+            "x2": {"min":0, "max":500},
+            "x3": {"min":0, "max":200},
+            "x4": {"min":0, "max":240},
+            "x5": {"min":0, "max":300},
+            "x6": {"min":0, "max":260},
+            "x7": {"min":0, "max":6000},
+            "x8": {"min":0, "max":6000}
+        },
+        "restrictions":
+        {
+            "0": "x0 + x1 + x2 <= 500",
+            "1": "(2.5*x0) + x3 - x5 >= 200",
+            "2": "(3*x1) + x4 - x6 <= 240",
+            "3": "x7 + x8 <= 20*x2"
+
+        },
+        "pop_gen_safety": 0
+    },
+    "alg_config":
+    {
+        "genetic": {"mutation_p": 0.7 },
+        "diff_ev": {"mutation_f": 0.5, "recomb_const": 0.5},
+        "particle": {"w": 0.5, "c1":0.5, "c2":0.5}
+    }
+}
