@@ -1,4 +1,5 @@
 {
+    "name": "1",
     "type": "math",
     "generations": 100,
     "pop_size": 20,

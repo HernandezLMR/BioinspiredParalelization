@@ -34,12 +34,9 @@ def extract_variables(func):
 
 
     
-def assemble_json(name, exp_type, eval_func, restrictions, ranges, generations, popsize, safety, algs_config, objective):
+def assemble_json(name, exp_type, eval_func, restrictions, ranges, generations, popsize, algs_config, objective):
     exp_type_label = ["---", "Ecuacion Matematica", "Red Neuronal"][exp_type]
-    if safety:
-        pop_safety = 1
-    else:
-        pop_safety = 0
+
 
     if objective == "Maximizar":
         obj = "MAX"
@@ -57,7 +54,6 @@ def assemble_json(name, exp_type, eval_func, restrictions, ranges, generations, 
                 for i, pair in enumerate(ranges)
             },
             "restrictions": restrictions,
-            "pop_gen_safety": pop_safety
         }
     else:
         task_config = {
@@ -138,7 +134,7 @@ with gr.Blocks() as demo:
 
         @gr.render(inputs=[restrict_num, eval_func])
         def set_restrict(restrict_n, func):
-            pop_safety = gr.Checkbox(label="Asegurar que toda la poblacion sea valida")
+            
             restrictions = []
             if int(restrict_n) > 0:
                 gr.Markdown("**Restricciones**")
@@ -179,7 +175,7 @@ with gr.Blocks() as demo:
                 .then(collect_values, inputs=ranges, outputs=range_values) \
                 .then(collect_algs, inputs=[mutP, mutF, recombC, w, c1, c2], outputs=algs_config)\
                 .then(fn=assemble_json,
-                        inputs=[exp_name, exp_type, eval_func, restriction_values, range_values, gen_num, pop_size, pop_safety, algs_config, objective],
+                        inputs=[exp_name, exp_type, eval_func, restriction_values, range_values, gen_num, pop_size, algs_config, objective],
                         outputs=None)\
                 .then(
                     lambda: (
