@@ -50,3 +50,20 @@ def clip_individual(individual, preloaded_ranges):
     clip_min = np.array([low for (low, _) in preloaded_ranges])
     clip_max = np.array([high for (_, high) in preloaded_ranges])
     return np.clip(individual, clip_min, clip_max)
+
+
+class EarlyStopping:
+    def __init__(self, patience=5, epsilon=1e-6):
+        self.patience = patience
+        self.epsilon = epsilon
+        self.counter = 0
+        self.best_score = None
+
+    def stopper(self, current_score):
+        if self.best_score is None or abs(current_score - self.best_score) > self.epsilon:
+            self.best_score = current_score
+            self.counter = 0
+        else:
+            self.counter += 1
+
+        return self.counter >= self.patience

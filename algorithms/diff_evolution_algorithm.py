@@ -1,9 +1,7 @@
-import re
 import numpy as np
 import random
-import json
 import sympy as sp
-from utils import clip_individual, get_variables, check_restrictions, evaluate_fitness, generate_valid_individual
+from utils import clip_individual, check_restrictions, evaluate_fitness, generate_valid_individual, EarlyStopping
 
 
 def create_population(POPSIZE, RESTRICTIONS, preloaded_ranges, VARIABLES):
@@ -28,61 +26,44 @@ def process_ind(target, child, EQUATION, RESTRICTIONS, OBJECTIVE,VARIABLES):
     return win
 
 
-def diff_ev(config_path):
-    with open(config_path,'r') as file:
-        data = json.load(file)
-        GENERATIONS = data['generations']
-        POPSIZE = data['pop_size']
-        EQUATION = sp.sympify(data['task_config']['eq']) 
+def diff_ev(compact, ranges, population = None):
+    GENERATIONS, POPSIZE, EQUATION, VARIABLES, VARNUM, RESTRICTIONS, OBJECTIVE, MUTATIONF, RECOMBCONST  = compact
+    preloaded_ranges = ranges
 
-        VARIABLES = get_variables(EQUATION)
-        VARNUM = len(VARIABLES)
-
-        OBJECTIVE = data['task_config']['obj'] 
-        RANGES = data['task_config']['ranges'] #dict type
-        preloaded_ranges = [(RANGES[f'x{i}']['min'], RANGES[f'x{i}']['max']) for i in range(VARNUM)] #Store in memory to avoid constat lookup
-        RESTRICTIONS = data['task_config']['restrictions'] #array type
-        #Parameters for differential evolution algorithm
-        MUTATIONF = data['alg_config']['diff_ev']['mutation_f']
-        RECOMBCONST = data['alg_config']['diff_ev']['recomb_const']
-
-        
-        
-        #Create initial population
+    
+    
+    #Create initial population
+    if population == None:
         population = create_population(POPSIZE,RESTRICTIONS,preloaded_ranges,VARIABLES)            
-        
+    
 
 
-        #Main algorithm
-        for n in range(GENERATIONS):
-            for i, target in enumerate(population):
-                populationEX = [ind for j, ind in enumerate(population) if j != i]
-                values = random.sample(populationEX, 3)
-                child = np.add(values[0],(MUTATIONF * (np.subtract(values[1],values[2]))))
-                recombined = np.where(np.random.rand(VARNUM) < RECOMBCONST, child, target)
-                recombined = clip_individual(recombined, preloaded_ranges)
+    #Main algorithm
+    early_stop = EarlyStopping()
+    for n in range(GENERATIONS):
+        for i, target in enumerate(population):
+            populationEX = [ind for j, ind in enumerate(population) if j != i]
+            values = random.sample(populationEX, 3)
+            child = np.add(values[0],(MUTATIONF * (np.subtract(values[1],values[2]))))
+            recombined = np.where(np.random.rand(VARNUM) < RECOMBCONST, child, target)
+            recombined = clip_individual(recombined, preloaded_ranges)
 
-                if (process_ind(target, child, EQUATION, RESTRICTIONS, OBJECTIVE, VARIABLES)):
+            if (process_ind(target, recombined, EQUATION, RESTRICTIONS, OBJECTIVE, VARIABLES)):
 
-                    population[i] = recombined
+                population[i] = recombined
+        best_fitness = min(evaluate_fitness(ind, EQUATION, VARIABLES) for ind in population) if OBJECTIVE == 'MIN' else \
+                   max(evaluate_fitness(ind, EQUATION, VARIABLES) for ind in population)
 
-                    
-    #Old logging feature, will replace in later version
-        minimun = float('inf') if OBJECTIVE == 'MIN' else float('-inf')  # Initialize for MIN or MAX
-        best_individual = None
+        if early_stop.stopper(best_fitness):
+            #print(f"Early stopping at generation {n}")
+            break
 
-        for individual in population:
-            value = evaluate_fitness(individual, EQUATION, VARIABLES)
-            
-            if OBJECTIVE == 'MIN' and value < minimun:
-                minimun = value
-                best_individual = individual
-            elif OBJECTIVE == 'MAX' and value > minimun:
-                minimun = value
-                best_individual = individual
+                
+    best_individual = min(population, key=lambda ind: evaluate_fitness(ind, EQUATION, VARIABLES)) if OBJECTIVE == 'MIN' else max(population, key=lambda ind: evaluate_fitness(ind, EQUATION, VARIABLES))
+    best_value = evaluate_fitness(best_individual, EQUATION, VARIABLES)
 
-    print(f"El valor {'minimo' if OBJECTIVE == 'MIN' else 'maximo'} encontrado es: {minimun}")
-    print(f"El individuo con el valor {'minimo' if OBJECTIVE == 'MIN' else 'maximo'} es: {best_individual}")
+    
+    return best_individual, best_value, population
 
 
                 

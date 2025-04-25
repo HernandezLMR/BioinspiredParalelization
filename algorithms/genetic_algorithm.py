@@ -1,15 +1,6 @@
-import json
 import sympy as sp
 import numpy as np
-import re
-from collections import deque
-from utils import clip_individual, get_variables, check_restrictions, evaluate_fitness, generate_valid_individual
-
-def log_best_individual(logs, generation, elites, FUNCTION, VARIABLES):
-    best = max(elites, key=lambda ind: evaluate_fitness(ind, FUNCTION, VARIABLES))
-    best_fitness = evaluate_fitness(best, FUNCTION, VARIABLES)
-    logs.append((generation, best, best_fitness))
-
+from utils import clip_individual, check_restrictions, evaluate_fitness, generate_valid_individual, EarlyStopping
 
 
 def create_population(POPSIZE, RESTRICTIONS, preloaded_ranges, VARIABLES):
@@ -118,58 +109,48 @@ def create_children(parents, VARNUM, RESTRICTIONS, preloaded_ranges, VARIABLES, 
                     
                     
                     
-def genetic(config_path):
-    with open(config_path,'r') as file:
-        #tbh I could also encapsulate data extraction inside a function to avoid bloat but either way I'm loading these into memory
-        #and encapsulating would mean unpacking so I dont think its worth it
-        data = json.load(file)
-        GENERATIONS = data['generations']
-        POPSIZE = data['pop_size']
-        EQUATION = sp.sympify(data['task_config']['eq'])   
-        OBJECTIVE = data['task_config']['obj'] 
-        RANGES = data['task_config']['ranges'] #dict type
-        VARIABLES = get_variables(EQUATION)
-        VARNUM = len(VARIABLES)
+def genetic(compact, ranges, population = None):
+    GENERATIONS, POPSIZE, EQUATION, VARIABLES, VARNUM, RESTRICTIONS, OBJECTIVE, MUTATIONP  = compact
+    preloaded_ranges = ranges
+    
+    NWINNERS = int(np.floor(POPSIZE/2))
+    #Population ratios
+    NELITE = int(POPSIZE * 0.2)
+    NCHILDREN = int(POPSIZE * 0.6)
+    NMUTATE = POPSIZE - NELITE - NCHILDREN
 
-        RESTRICTIONS = data['task_config']['restrictions'] #array type
-        preloaded_ranges = [(RANGES[f'x{i}']['min'], RANGES[f'x{i}']['max']) for i in range(VARNUM)] #Store in memory to avoid constat lookup
-        #Parameters for genetic algorithm
-        MUTATIONP = data['alg_config']['genetic']['mutation_p']
-
-        
-        NWINNERS = int(np.floor(POPSIZE/2))
-        #Population ratios
-        NELITE = int(POPSIZE * 0.2)
-        NCHILDREN = int(POPSIZE * 0.6)
-        NMUTATE = POPSIZE - NELITE - NCHILDREN
-
-        logs = deque(maxlen=1000)
-
-
+    if population == None:
         population = create_population(POPSIZE,RESTRICTIONS,preloaded_ranges,VARIABLES)
 
-        for _ in range(GENERATIONS):
-            pop_fitness = []
-            for individual in population:
-                    pop_fitness.append(evaluate_fitness(individual, EQUATION, VARIABLES))
-            elites, population = get_winners(population, pop_fitness, NWINNERS, OBJECTIVE)
-            #Mutate population after extracting winners
-            population = mutate(population, MUTATIONP, preloaded_ranges, RESTRICTIONS, VARIABLES)
-            population = population[:NMUTATE]
-            #Generate children
-            children = create_children(elites, VARNUM, RESTRICTIONS, preloaded_ranges, VARIABLES)
-            children = children[:NCHILDREN]
-            elites = elites[:NELITE] #Clip all population sections to avoid bloat
-            #Form final population for epoch
-            population.extend(children)
-            population.extend(elites)
+    early_stop = EarlyStopping()
+    for g in range(GENERATIONS):
+        pop_fitness = []
+        for individual in population:
+                pop_fitness.append(evaluate_fitness(individual, EQUATION, VARIABLES))
+        elites, population = get_winners(population, pop_fitness, NWINNERS, OBJECTIVE)
+        #Mutate population after extracting winners
+        population = mutate(population, MUTATIONP, preloaded_ranges, RESTRICTIONS, VARIABLES)
+        population = population[:NMUTATE]
+        #Generate children
+        children = create_children(elites, VARNUM, RESTRICTIONS, preloaded_ranges, VARIABLES)
+        children = children[:NCHILDREN]
+        elites = elites[:NELITE] #Clip all population sections to avoid bloat
+        #Form final population for epoch
+        population.extend(children)
+        population.extend(elites)
+        best_fitness = min(evaluate_fitness(ind, EQUATION, VARIABLES) for ind in population) if OBJECTIVE == 'MIN' else \
+                   max(evaluate_fitness(ind, EQUATION, VARIABLES) for ind in population)
+        if early_stop.stopper(best_fitness):
+            #print(f"Early stopping at generation {g}")
+            break
 
-            if _ % max(1, GENERATIONS // 1000) == 0:
-                log_best_individual(logs, _, elites, EQUATION, VARIABLES)
+    best_individual = min(population, key=lambda ind: evaluate_fitness(ind, EQUATION, VARIABLES)) if OBJECTIVE == 'MIN' else max(population, key=lambda ind: evaluate_fitness(ind, EQUATION, VARIABLES))
+    best_value = evaluate_fitness(best_individual, EQUATION, VARIABLES)
 
-        with open("./logs/best_individuals_log.txt", "w") as log_file:
-            for gen, ind, fit in logs:
-                log_file.write(f"Generation {gen}: Fitness = {fit}, Individual = {ind}\n")
+
+    return best_individual, best_value, population
+
+
 
 if __name__ == "__main__":
     genetic("./saved_exp/Sample.json")
