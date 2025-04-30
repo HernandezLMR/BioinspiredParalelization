@@ -53,7 +53,7 @@ def clip_individual(individual, preloaded_ranges):
 
 
 class EarlyStopping:
-    def __init__(self, patience=5, epsilon=1e-6):
+    def __init__(self, patience=10, epsilon=1e-6):
         self.patience = patience
         self.epsilon = epsilon
         self.counter = 0

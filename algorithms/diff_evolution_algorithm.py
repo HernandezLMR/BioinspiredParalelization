@@ -33,8 +33,11 @@ def diff_ev(compact, ranges, population = None):
     
     
     #Create initial population
-    if population == None:
-        population = create_population(POPSIZE,RESTRICTIONS,preloaded_ranges,VARIABLES)            
+    if population is None:
+        population = create_population(POPSIZE,RESTRICTIONS,preloaded_ranges,VARIABLES)
+    elif len(population) < POPSIZE:
+        population = population.tolist()
+        population.extend(create_population(POPSIZE-len(population),RESTRICTIONS, preloaded_ranges,VARIABLES))          
     
 
 

@@ -119,8 +119,11 @@ def genetic(compact, ranges, population = None):
     NCHILDREN = int(POPSIZE * 0.6)
     NMUTATE = POPSIZE - NELITE - NCHILDREN
 
-    if population == None:
+    if population is None:
         population = create_population(POPSIZE,RESTRICTIONS,preloaded_ranges,VARIABLES)
+    elif len(population) < POPSIZE:
+        population = population.tolist()
+        population.extend(create_population(POPSIZE-len(population),RESTRICTIONS, preloaded_ranges,VARIABLES))
 
     early_stop = EarlyStopping()
     for g in range(GENERATIONS):

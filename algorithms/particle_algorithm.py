@@ -55,10 +55,12 @@ def particle_swarm(compact, ranges, population = None):
 
     best_global_value = None
     best_global_position = None
-    if population == None:
+    if population is None:
         particles = [particle(preloaded_ranges, VARIABLES, EQUATION, RESTRICTIONS) for _ in range(POPSIZE)]
     else:
-        particles = population
+        particles = population.tolist()
+        if len(particles) < POPSIZE:
+            particles.extend(particle(preloaded_ranges, VARIABLES, EQUATION, RESTRICTIONS) for _ in range(POPSIZE-len(population)))
     
     if OBJECTIVE == 'MIN':
         best_global_value = np.inf
