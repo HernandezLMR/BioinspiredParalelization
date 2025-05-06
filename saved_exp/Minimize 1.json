@@ -1,0 +1,32 @@
+{
+  "name": "Minimize 1",
+  "type": "math",
+  "generations": 100,
+  "pop_size": 30,
+  "task_config": {
+    "eq": "(x0 - 10)**3 + (x1 - 20)**3",
+    "obj": "MIN",
+    "ranges": {
+      "x0": {"min": 14.25, "max": 15.25},
+      "x1": {"min": 1, "max": 8}
+    },
+    "restrictions": [
+      "-(x0 - 5)**2 - (x1 - 5)**2 + 100 <= 0",
+      "(x0 - 6)**2 + (x1 - 5)**2 - 82.81 <= 0"
+    ]
+  },
+  "alg_config": {
+    "genetic": {
+      "mutation_p": 0.6
+    },
+    "diff_ev": {
+      "mutation_f": 0.6,
+      "recomb_const": 0.85
+    },
+    "particle": {
+      "w": 0.7,
+      "c1": 0.4,
+      "c2": 0.4
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Minimier 4",
+  "type": "math",
+  "generations": 70,
+  "pop_size": 30,
+  "task_config": {
+    "eq": "(x0-25)**3 + (x1-30)**3",
+    "obj": "MIN",
+    "ranges": {  
+      "x0": {"min": 9.5,"max":12.5},
+      "x1": {"min": 10, "max":13.5}
+    },
+    "restrictions": [
+      "-(x0-5)**2 - (x1-5)**2 + 81 <= 0",  
+      "(x0-6)**2 + (x1-5)**2 - 70.56 <= 0"
+    ]
+  },
+  "alg_config": {
+    "genetic": {
+      "mutation_p": 0.5
+    },
+    "diff_ev": {
+      "mutation_f": 0.9,
+      "recomb_const": 0.7
+    },
+    "particle": {
+      "w": 0.8,
+      "c1": 1.0,
+      "c2": 1.0
+    }
+  }
+}
