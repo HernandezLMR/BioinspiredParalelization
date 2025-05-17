@@ -1,4 +1,5 @@
-def math_extract(config):
+import json
+def math_extract_text(config):
     outs = []
     outs.append("GENERAL OPTIMIZATION INFO <br />")
     outs.append(f"Operation type: {config['type']} <br />")
@@ -35,6 +36,10 @@ def math_extract(config):
 
     
     return ''.join(outs)  # Return the formatted string
+
+def math_extract(config):
+    return (json.load(config))
+
 
 '''def net_exctract(config):
     outs = []

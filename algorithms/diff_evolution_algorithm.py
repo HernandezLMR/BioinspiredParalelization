@@ -1,7 +1,7 @@
 import numpy as np
 import random
 import sympy as sp
-from utils import clip_individual, check_restrictions, evaluate_fitness, generate_valid_individual, EarlyStopping
+from algorithms.utils import clip_individual, check_restrictions, evaluate_fitness, generate_valid_individual, EarlyStopping
 
 
 def create_population(POPSIZE, RESTRICTIONS, preloaded_ranges, VARIABLES):

@@ -2,12 +2,13 @@ import json
 import time
 import sympy as sp
 import numpy as np
+from pathlib import Path
 from copy import deepcopy
 from multiprocessing import Pool
-from utils import get_variables, EarlyStopping
-from genetic_algorithm import genetic
-from diff_evolution_algorithm import diff_ev
-from particle_algorithm import particle_swarm
+from algorithms.utils import get_variables, EarlyStopping
+from algorithms.genetic_algorithm import genetic
+from algorithms.diff_evolution_algorithm import diff_ev
+from algorithms.particle_algorithm import particle_swarm
 
 def range_difference(r):
     return r[1] - r[0]
@@ -57,8 +58,10 @@ def create_tasks(i, comp, preloaded_ranges, sectioned_ranges, max_index, populat
     
 
 
-def main(alg_type, config_path, n_processors, n_repeats):
-    with open(config_path,'r') as file:
+def run_algs(alg_type, config_path, n_processors, n_repeats):
+    base_dir = Path(__file__).resolve().parent.parent
+    json_path = base_dir / "saved_exp" / config_path
+    with open(json_path,'r') as file:
         data = json.load(file)
     GENERATIONS = data['generations']
     POPSIZE = data['pop_size']
@@ -75,20 +78,34 @@ def main(alg_type, config_path, n_processors, n_repeats):
     population = None
     task_populations = None
 
+    results_log = {
+        "algorithm": ["genetic", "diff_ev", "particle"][alg_type],
+        "sequential": {},
+        "parallel": {
+            "epochs": []
+        }
+    }
+
     early_stop = EarlyStopping()
     if alg_type == 0:
         MUTATIONP = data['alg_config']['genetic']['mutation_p']
         comp.append(MUTATIONP)
         comp_seq.append(MUTATIONP)
-        print("Running sequential version")
+        #print("Running sequential version")
         start_time = time.time()
         res = genetic(comp_seq, preloaded_ranges)
-        print(f"Best individual found: {res[0]}")
-        print(f"With result {res[1]}")
+        #print(f"Best individual found: {res[0]}")
+        #print(f"With result {res[1]}")
         seq_time = time.time() - start_time
-        print(f"Time taken: {seq_time}")
+        #print(f"Time taken: {seq_time}")
+
+        results_log["sequential"] = {
+            "best_individual": res[0],
+            "best_value": res[1],
+            "time_taken": seq_time
+        }
         
-        print("Running parallel version")
+        #print("Running parallel version")
         start_time = time.time()
         for e in range(n_repeats):
             max_index, sectioned_ranges = create_subarrays(preloaded_ranges, n_processors)
@@ -110,22 +127,30 @@ def main(alg_type, config_path, n_processors, n_repeats):
                 results = pool.map(run_genetic, tasks)
 
             best_population_idx = get_best_pop(results, OBJECTIVE)
+            best_ind, best_val = results[best_population_idx][:2]
 
-            print(f"Epoch {e+1}")
-            print("Best Individual:", results[best_population_idx][0])
-            print("Best Value:", results[best_population_idx][1])
-            print("\n")
+            results_log["parallel"]["epochs"].append({
+                "epoch": e + 1,
+                "best_individual": best_ind,
+                "best_value": best_val
+            })
+
+            #print(f"Epoch {e+1}")
+            #print("Best Individual:", results[best_population_idx][0])
+            #print("Best Value:", results[best_population_idx][1])
+            #print("\n")
             population = results[best_population_idx][2]
             if early_stop.stopper(results[best_population_idx][1]):
-                print(f"Early stopping at epoch {e}")
+                results_log["parallel"]["early_stopping_epoch"] = e
+                #print(f"Early stopping at epoch {e}")
                 break
         parallel_time = time.time() - start_time
-        print(f"Time taken: {parallel_time}")
-
         speed_up = seq_time - parallel_time
-        print(f"Speed_up: {speed_up}")
-        effffffff = speed_up/n_processors
-        print(f"Efficiency: {effffffff}")
+        efficiency = speed_up / n_processors
+
+        results_log["parallel"]["time_taken"] = parallel_time
+        results_log["parallel"]["speed_up"] = speed_up
+        results_log["parallel"]["efficiency"] = efficiency
     
 
     elif alg_type == 1:
@@ -136,15 +161,21 @@ def main(alg_type, config_path, n_processors, n_repeats):
         comp_seq.append(MUTATIONF)
         comp_seq.append(RECOMBCONST)
 
-        print("Running sequential version")
+        #print("Running sequential version")
         start_time = time.time()
         res = diff_ev(comp_seq, preloaded_ranges)
-        print(f"Best individual found: {res[0]}")
-        print(f"With result {res[1]}")
+        #print(f"Best individual found: {res[0]}")
+        #print(f"With result {res[1]}")
         seq_time = time.time() - start_time
-        print(f"Time taken: {seq_time}")
+        #print(f"Time taken: {seq_time}")
+
+        results_log["sequential"] = {
+            "best_individual": res[0],
+            "best_value": res[1],
+            "time_taken": seq_time
+        }
         
-        print("Running parallel version")
+        #print("Running parallel version")
         start_time = time.time()
         
         for e in range(n_repeats):
@@ -168,22 +199,30 @@ def main(alg_type, config_path, n_processors, n_repeats):
                 results = pool.map(run_ev, tasks)
 
             best_population_idx = get_best_pop(results, OBJECTIVE)
+            best_ind, best_val = results[best_population_idx][:2]
 
-            print(f"Epoch {e+1}")
-            print("Best Individual:", results[best_population_idx][0])
-            print("Best Value:", results[best_population_idx][1])
-            print("\n")
+            results_log["parallel"]["epochs"].append({
+                "epoch": e + 1,
+                "best_individual": best_ind,
+                "best_value": best_val
+            })
+
+            #print(f"Epoch {e+1}")
+            #print("Best Individual:", results[best_population_idx][0])
+            #print("Best Value:", results[best_population_idx][1])
+            #print("\n")
             population = results[best_population_idx][2]
             if early_stop.stopper(results[best_population_idx][1]):
-                print(f"Early stopping at epoch {e}")
+                results_log["parallel"]["early_stopping_epoch"] = e
+                #print(f"Early stopping at epoch {e}")
                 break
         parallel_time = time.time() - start_time
-        print(f"Time taken: {parallel_time}")
-
         speed_up = seq_time - parallel_time
-        print(f"Speed_up: {speed_up}")
-        effffffff = speed_up/n_processors
-        print(f"Efficiency: {effffffff}")
+        efficiency = speed_up / n_processors
+
+        results_log["parallel"]["time_taken"] = parallel_time
+        results_log["parallel"]["speed_up"] = speed_up
+        results_log["parallel"]["efficiency"] = efficiency
         
 
     elif alg_type == 2:
@@ -197,15 +236,21 @@ def main(alg_type, config_path, n_processors, n_repeats):
         comp_seq.append(C1)
         comp_seq.append(C2)
 
-        print("Running sequential version")
+        #print("Running sequential version")
         start_time = time.time()
         res = particle_swarm(comp_seq, preloaded_ranges)
-        print(f"Best individual found: {res[0]}")
-        print(f"With result {res[1]}")
+        #print(f"Best individual found: {res[0]}")
+        #print(f"With result {res[1]}")
         seq_time = time.time() - start_time
-        print(f"Time taken: {seq_time}")
+        #print(f"Time taken: {seq_time}")
 
-        print("Running parallel version")
+        results_log["sequential"] = {
+            "best_individual": res[0],
+            "best_value": res[1],
+            "time_taken": seq_time
+        }
+
+        #print("Running parallel version")
         start_time = time.time()
 
         for e in range(n_repeats):
@@ -230,24 +275,34 @@ def main(alg_type, config_path, n_processors, n_repeats):
                 results = pool.map(run_particles, tasks)
 
             best_population_idx = get_best_pop(results, OBJECTIVE)
+            best_ind, best_val = results[best_population_idx][:2]
 
-            print(f"Epoch {e+1}")
-            print("Best Individual:", results[best_population_idx][0])
-            print("Best Value:", results[best_population_idx][1])
-            print("\n")
+            results_log["parallel"]["epochs"].append({
+                "epoch": e + 1,
+                "best_individual": best_ind,
+                "best_value": best_val
+            })
+
+            #print(f"Epoch {e+1}")
+            #print("Best Individual:", results[best_population_idx][0])
+            #print("Best Value:", results[best_population_idx][1])
+            #print("\n")
             population = results[best_population_idx][2]
             if early_stop.stopper(results[best_population_idx][1]):
-                print(f"Early stopping at epoch {e}")
+                results_log["parallel"]["early_stopping_epoch"] = e
+               # print(f"Early stopping at epoch {e}")
                 break
             
         parallel_time = time.time() - start_time
-        print(f"Time taken: {parallel_time}")
-
         speed_up = seq_time - parallel_time
-        print(f"Speed_up: {speed_up}")
-        effffffff = speed_up/n_processors
-        print(f"Efficiency: {effffffff}")
+        efficiency = speed_up / n_processors
+
+        results_log["parallel"]["time_taken"] = parallel_time
+        results_log["parallel"]["speed_up"] = speed_up
+        results_log["parallel"]["efficiency"] = efficiency
+    
+    return results_log
 
 
 if __name__ == "__main__":
-    main(2, "./saved_exp/prueba1.json", 8, 5)
+    run_algs(1, "./saved_exp/Sample.json", 8, 5)
