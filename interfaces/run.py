@@ -1,6 +1,9 @@
 import gradio as gr
 import os
 import json
+import time
+import numpy as np
+import sympy as sp
 from algorithms.controller import run_algs
 
 '''It would be better to split these pages into separate subpages but I think keeping them as big saucy bois is funnier'''
@@ -24,6 +27,20 @@ def format_epoch_results(results_log):
         lines.append(f"Best value: {epoch_data['best_value']}")
         lines.append("")  # Line skip
     return "\n".join(lines)
+
+def make_json_serializable(obj):
+    if isinstance(obj, dict):
+        return {k: make_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_json_serializable(v) for v in obj]
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, (np.integer, np.floating)):
+        return obj.item()
+    elif isinstance(obj, (sp.Float, sp.Integer)):
+        return float(obj)
+    else:
+        return obj
 
 
 def load_config(filename):
@@ -51,6 +68,8 @@ def load_config(filename):
 
 def run_alg(alg_type, config_path, n_processors, n_repeats):
     res = run_algs(alg_type, config_path, int(n_processors), int(n_repeats))
+    res["n_processors"] = int(n_processors)
+    res["n_epochs"] = int(n_repeats)
     try:
         val_stop = str(res["parallel"]["early_stopping_epoch"])
         vis = True
@@ -58,6 +77,13 @@ def run_alg(alg_type, config_path, n_processors, n_repeats):
         val_stop = ""
         vis = False
     alg_dict = {"0": "Genetic", "1": "Differential Evolution", "2":"Particle"}
+
+    serializable_res = make_json_serializable(res)
+    json_file = json.dumps(serializable_res, indent=2)
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    filename = os.path.splitext(config_path)[0]
+    with open(f"./exp_results/{filename+"_"+timestr}.json", "w") as outfile:
+        outfile.write(json_file)
 
     return gr.Textbox(value = res["sequential"]["best_value"]),\
            gr.Textbox(value = res["sequential"]["best_individual"]),\
@@ -70,7 +96,7 @@ def run_alg(alg_type, config_path, n_processors, n_repeats):
            gr.Textbox(value = res["parallel"]["speed_up"]),\
            gr.Textbox(value = res["parallel"]["efficiency"]),\
            gr.Group(visible = True),\
-           gr.Markdown(value=f"<center>Using {alg_dict[str(alg_type)]} algortihm</center>")
+           gr.Markdown(value=f"<center><h2>Using {alg_dict[str(alg_type)]} algortihm</h2></center>")
     
 
 with gr.Blocks() as demo:
@@ -142,7 +168,8 @@ with gr.Blocks() as demo:
                         results = gr.Textbox()
                     speed_up = gr.Textbox(label="Speed up")
                     efficiency = gr.Textbox(label="Efficiency")
-            run_button.click(lambda: gr.update(visible=True), outputs=loading, show_progress=False) \
+            run_button.click(lambda: gr.update(visible=True), outputs=[loading], show_progress=False) \
+                    .then(lambda: gr.update(visible=False), outputs=[res_group], show_progress=False) \
                     .then(run_alg, 
                             inputs=[alg_type, config_dropdown, n_processors, n_repeats], 
                             outputs=[

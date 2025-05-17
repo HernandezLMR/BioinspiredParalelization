@@ -83,7 +83,9 @@ def run_algs(alg_type, config_path, n_processors, n_repeats):
         "sequential": {},
         "parallel": {
             "epochs": []
-        }
+        },
+        "n_processors":None,
+        "n_epochs":None
     }
 
     early_stop = EarlyStopping()

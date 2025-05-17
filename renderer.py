@@ -8,9 +8,9 @@ import interfaces.new as new
 
 with gr.Blocks(css="#refbtn button {height: 2.4cm !important;}", title="Optimizer") as demo:
     with gr.Tabs():
-        with gr.Tab("Config"):
+        with gr.Tab("Open"):
             run.demo.render()
-        with gr.Tab("Test"):
+        with gr.Tab("Create"):
             new.demo.render()
 
 if __name__ == "__main__":
