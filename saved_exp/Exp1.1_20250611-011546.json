@@ -1,0 +1,44 @@
+{
+  "algorithm": "genetic",
+  "sequential": {
+    "best_individual": [
+      14.25,
+      1.1913842132351715
+    ],
+    "best_value": -6577.0460533345295,
+    "time_taken": 7.805992841720581
+  },
+  "parallel": {
+    "epochs": [
+      {
+        "epoch": 1,
+        "best_individual": [
+          14.328209022507549,
+          1.3444636496992914
+        ],
+        "best_value": -6411.586299623061
+      },
+      {
+        "epoch": 2,
+        "best_individual": [
+          14.328209022507549,
+          1.3444636496992914
+        ],
+        "best_value": -6411.586299623061
+      },
+      {
+        "epoch": 3,
+        "best_individual": [
+          14.328209022507549,
+          1.3444636496992914
+        ],
+        "best_value": -6411.586299623061
+      }
+    ],
+    "time_taken": 15.932210206985474,
+    "speed_up": -8.126217365264893,
+    "efficiency": -2.031554341316223
+  },
+  "n_processors": 4,
+  "n_epochs": 3
+}
