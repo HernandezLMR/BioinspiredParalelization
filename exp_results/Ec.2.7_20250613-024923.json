@@ -1,0 +1,60 @@
+{
+  "algorithm": "diff_ev",
+  "sequential": {
+    "best_individual": [
+      2.9998747127210525,
+      2.0000649205841614
+    ],
+    "best_value": 1.9911584513914883e-08,
+    "time_taken": 89.00154447555542
+  },
+  "parallel": {
+    "epochs": [
+      {
+        "epoch": 1,
+        "best_individual": [
+          3.0,
+          1.9994115753922312
+        ],
+        "best_value": 3.462435190278144e-07
+      },
+      {
+        "epoch": 2,
+        "best_individual": [
+          3.0,
+          1.9997046688990567
+        ],
+        "best_value": 8.722045918436012e-08
+      },
+      {
+        "epoch": 3,
+        "best_individual": [
+          3.0,
+          1.9997046688990567
+        ],
+        "best_value": 8.722045918436012e-08
+      },
+      {
+        "epoch": 4,
+        "best_individual": [
+          3.0,
+          1.999992689101933
+        ],
+        "best_value": 5.344923054513942e-11
+      },
+      {
+        "epoch": 5,
+        "best_individual": [
+          3.0,
+          2.0000006594272537
+        ],
+        "best_value": 4.348443029102386e-13
+      }
+    ],
+    "time_taken": 43.64430117607117,
+    "speed_up": 45.35724329948425,
+    "efficiency": 5.669655412435532
+  },
+  "n_processors": 8,
+  "n_epochs": 5
+}

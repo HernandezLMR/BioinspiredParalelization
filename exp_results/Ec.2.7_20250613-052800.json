@@ -1,0 +1,44 @@
+{
+  "algorithm": "particle",
+  "sequential": {
+    "best_individual": [
+      2.9999613258856916,
+      1.9999845481781129
+    ],
+    "best_value": 1.7344459171669366e-09,
+    "time_taken": 27.283256769180298
+  },
+  "parallel": {
+    "epochs": [
+      {
+        "epoch": 1,
+        "best_individual": [
+          3.0,
+          2.0013051091741096
+        ],
+        "best_value": 1.7033099563451521e-06
+      },
+      {
+        "epoch": 2,
+        "best_individual": [
+          3.0,
+          2.0000070349367864
+        ],
+        "best_value": 4.9490335589249937e-11
+      },
+      {
+        "epoch": 3,
+        "best_individual": [
+          3.0,
+          2.0000070349367864
+        ],
+        "best_value": 4.9490335589249937e-11
+      }
+    ],
+    "time_taken": 27.422717094421387,
+    "speed_up": -0.13946032524108887,
+    "efficiency": -0.011621693770090738
+  },
+  "n_processors": 12,
+  "n_epochs": 3
+}
